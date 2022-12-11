@@ -107,7 +107,7 @@
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
         <!-- Start RViz -->
-        <node name="rviz" pkg="rviz" type="rviz" output="log" args="-f base_link" if="$(arg start_rviz)"/> 
+        <node name="rviz" pkg="rviz" type="rviz" output="log" args="-f base_link -d $(find kortex_driver)/config/rviz.rviz" if="$(arg start_rviz)"/> 
 
 
 
@@ -116,12 +116,24 @@
         <!-- subscribe nusbrelaycontrol -->
         <!-- <node pkg="kortex_examples" type="usbrelay_subscriber" name="usbrelay_subscriber" /> -->
         <!-- publish eye in hand matrix                                                        args = "x y z  q: x y z w"     -->
-        <node pkg="tf" type="static_transform_publisher" name="new_ee_realsensed455_broadcaster" args="0.0092 0.11968 0.03348 0.0049 0.011 0.0273 0.9995  new_end_effector_link realsensed455 100"/>
+        <!-- <node pkg="tf" type="static_transform_publisher" name="new_ee_realsensed455_broadcaster" args="0.0092 0.11968 0.03348 0.0049 0.011 0.0273 0.9995  new_end_effector_link realsensed455 100"/> -->
+        <node pkg="tf" type="static_transform_publisher" name="new_ee_realsensed455_broadcaster" args="-0.011016 0.12089 0.024924 0.003528 0.02645 -0.99963 0.004647  new_end_effector_link realsensed455 100"/>
+        <!-- <node pkg="tf" type="static_transform_publisher" name="new_ee_realsensed455_broadcaster" args="0.010618 0.116836 0.030914 -0.003270 0.000961 -0.000157 0.999994  new_end_effector_link realsensed455 100"/> -->
          <!-- publish wrisband2ee                                                        args = "x y z  q: x y z w"     -->
-        <node pkg="tf" type="static_transform_publisher" name="caixuezhen_newEndEffector" args="0 -0.0695 0.0671 0 0 0 1  new_end_effector_link caixuezhen 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="lancet_newEndEffector" args="0.001 -0.0661 0.083 0 0 0 1  new_end_effector_link lancet 100"/>
+        <!-- <node pkg="tf" type="static_transform_publisher" name="pushbeam_newEndEffector" args="0.04243 -0.06954 0.07522 0 0 0.70710678 0.70710678 new_end_effector_link pushbeam 100"/> -->
+        <node pkg="tf" type="static_transform_publisher" name="pushbeam_newEndEffector" args="0.02743 -0.06904 0.07522 0 0 0.70710678 0.70710678 new_end_effector_link pushbeam 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="blood_collector" args="0.073 -0.003 0.142 0 0 0.70710678 0.70710678 new_end_effector_link collector 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="disinfector_newEndEffector" args="-0.035 -0.0458 0.053 0 0 0 1 new_end_effector_link disinfector 100"/>
+        <node pkg="tf" type="static_transform_publisher" name="zhixue_newEndEffector" args="0.055 0.035 0.142 0 0 0.70710678 0.70710678 new_end_effector_link zhixue 100"/>
+
+
+          <!-- publish penwu                                                        args = "x y z  q: x y z w"     pen wu -->
+        <!-- <node pkg="tf" type="static_transform_publisher" name="penwu_newEndEffector" args="-0.025 -0.0445 0.0401 0 0 0 1  new_end_effector_link caixuezhen 100"/> -->
         <!--start some pose estimator server-->
-        <node pkg="forehead_detect" type="forehead_pose_server" name="forehead_pose_server" />
-        <node pkg="dh_gripper_driver" type="dh_gripper_driver" name="dh_gripper_driver" />
+        <node pkg="hand_mediapipe" type="landmark_server.py" name="landmark_server_node" />
+        <node pkg="hand_mediapipe" type="fingertip_pose_server" name="fingertip_pose_server_node" />
+        <!-- <node pkg="dh_gripper_driver" type="dh_gripper_driver" name="dh_gripper_driver" /> -->
 
 
 

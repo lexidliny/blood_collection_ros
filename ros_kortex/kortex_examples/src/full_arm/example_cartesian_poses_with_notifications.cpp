@@ -101,17 +101,75 @@ bool example_cartesian_action(ros::NodeHandle n, const std::string &robot_name)
   kortex_driver::ConstrainedPose my_constrained_pose;
   kortex_driver::CartesianSpeed my_cartesian_speed;
 
-  my_cartesian_speed.translation = 0.1f;
+  my_cartesian_speed.translation = 0.f;
   my_cartesian_speed.orientation = 15.0f;
 
   my_constrained_pose.constraint.oneof_type.speed.push_back(my_cartesian_speed);
 
-  my_constrained_pose.target_pose.x = 0.1;
-  my_constrained_pose.target_pose.y = 0.;
-  my_constrained_pose.target_pose.z = 0;
-  my_constrained_pose.target_pose.theta_x = 0;
-  my_constrained_pose.target_pose.theta_y = 0;
-  my_constrained_pose.target_pose.theta_z = 0;
+  // my_constrained_pose.target_pose.x = 0.401100453697;
+  // my_constrained_pose.target_pose.y = -0.120438597499;
+  // my_constrained_pose.target_pose.z = 0.477869905398;
+  // my_constrained_pose.target_pose.theta_x = 0;
+  // my_constrained_pose.target_pose.theta_y = 0;
+  // my_constrained_pose.target_pose.theta_z = 0;
+
+  my_constrained_pose.target_pose.x = 0.378;
+  my_constrained_pose.target_pose.y = 0.005;
+  my_constrained_pose.target_pose.z = 0.501;
+  my_constrained_pose.target_pose.theta_x = 180.;
+  my_constrained_pose.target_pose.theta_y = 0.;
+  my_constrained_pose.target_pose.theta_z = 90.;
+
+  ros::ServiceClient service_client_execute_action = n.serviceClient<kortex_driver::ExecuteAction>("/" + robot_name + "/base/execute_action");
+  kortex_driver::ExecuteAction service_execute_action;
+
+  service_execute_action.request.input.oneof_action_parameters.reach_pose.push_back(my_constrained_pose);
+  service_execute_action.request.input.name = "pose1";
+  service_execute_action.request.input.handle.identifier = 1001;
+  service_execute_action.request.input.handle.action_type = kortex_driver::ActionType::REACH_POSE;
+  
+  last_action_notification_event = 0;
+  if (service_client_execute_action.call(service_execute_action))
+  {
+    ROS_INFO("Pose 1 was sent to the robot.");
+  }
+  else
+  {
+    std::string error_string = "Failed to call ExecuteAction on pose 1";
+    ROS_ERROR("%s", error_string.c_str());
+    return false;
+  }
+
+  // Waiting for the pose 1 to end
+  wait_for_action_end_or_abort();
+
+
+  return true;
+}
+
+bool example_cartesian_action2(ros::NodeHandle n, const std::string &robot_name)
+{
+  kortex_driver::ConstrainedPose my_constrained_pose;
+  kortex_driver::CartesianSpeed my_cartesian_speed;
+
+  my_cartesian_speed.translation = 0.3f;
+  my_cartesian_speed.orientation = 40.0f;
+
+  my_constrained_pose.constraint.oneof_type.speed.push_back(my_cartesian_speed);
+
+  // my_constrained_pose.target_pose.x = 0.401100453697;
+  // my_constrained_pose.target_pose.y = -0.120438597499;
+  // my_constrained_pose.target_pose.z = 0.477869905398;
+  // my_constrained_pose.target_pose.theta_x = 0;
+  // my_constrained_pose.target_pose.theta_y = 0;
+  // my_constrained_pose.target_pose.theta_z = 0;
+
+  my_constrained_pose.target_pose.x = 0.378;
+  my_constrained_pose.target_pose.y = 0.005;
+  my_constrained_pose.target_pose.z = 0.201;
+  my_constrained_pose.target_pose.theta_x = 180.;
+  my_constrained_pose.target_pose.theta_y = 0.;
+  my_constrained_pose.target_pose.theta_z = 90.;
 
   ros::ServiceClient service_client_execute_action = n.serviceClient<kortex_driver::ExecuteAction>("/" + robot_name + "/base/execute_action");
   kortex_driver::ExecuteAction service_execute_action;
@@ -214,6 +272,7 @@ int main(int argc, char **argv)
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   success &= example_home_the_robot(n, robot_name);
   success &= example_cartesian_action(n, robot_name);
+  success &= example_cartesian_action2(n, robot_name);
   success &= all_notifs_succeeded;
 
   // Report success for testing purposes

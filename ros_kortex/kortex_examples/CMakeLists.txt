@@ -6,7 +6,7 @@ add_compile_options(-std=c++11)
 add_definitions(-D_OS_UNIX)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs message_generation actionlib_msgs actionlib kortex_driver)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs message_generation actionlib_msgs actionlib kortex_driver tf)
 
 ## Declare a catkin package
 catkin_package()
@@ -18,6 +18,13 @@ include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/client_s
 include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/messages)
 include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/common)
 
+include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/client)
+  include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/client_stubs)
+  include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/messages)
+  include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include/common)
+  include_directories(include ${PROJECT_SOURCE_DIR}/../kortex_api/include)
+  link_directories(${PROJECT_SOURCE_DIR}/../kortex_api/lib/release)
+
 add_executable(example_actuator_configuration_cpp src/actuator_config/example_actuator_configuration.cpp)
 add_dependencies(example_actuator_configuration_cpp ${catkin_EXPORTED_TARGETS})
 target_link_libraries(example_actuator_configuration_cpp ${catkin_LIBRARIES} )
@@ -27,17 +34,25 @@ add_executable(example_full_arm_movement_cpp src/full_arm/example_full_arm_movem
 add_dependencies(example_full_arm_movement_cpp ${catkin_EXPORTED_TARGETS})
 target_link_libraries(example_full_arm_movement_cpp ${catkin_LIBRARIES} )
 
+add_executable(example_waypoint_action_client src/full_arm/example_waypoint_action_client.cpp)
+add_dependencies(example_waypoint_action_client ${catkin_EXPORTED_TARGETS})
+target_link_libraries(example_waypoint_action_client ${catkin_LIBRARIES} )
+
 add_executable(example_cartesian_poses_with_notifications_cpp src/full_arm/example_cartesian_poses_with_notifications.cpp)
 add_dependencies(example_cartesian_poses_with_notifications_cpp ${catkin_EXPORTED_TARGETS})
 target_link_libraries(example_cartesian_poses_with_notifications_cpp ${catkin_LIBRARIES} )
 
-add_executable(go2head src/full_arm/go2head.cpp)
-add_dependencies(go2head ${catkin_EXPORTED_TARGETS})
-target_link_libraries(go2head ${catkin_LIBRARIES} )
+add_executable(fingertip src/full_arm/fingertip.cpp)
+add_dependencies(fingertip ${catkin_EXPORTED_TARGETS})
+target_link_libraries(fingertip ${catkin_LIBRARIES} )
 
 add_executable(mywrench src/full_arm/mywrench.cpp)
 add_dependencies(mywrench ${catkin_EXPORTED_TARGETS})
-target_link_libraries(mywrench ${catkin_LIBRARIES} )
+target_link_libraries(mywrench ${catkin_LIBRARIES} KortexApiCpp)
+
+add_executable(pose_test src/full_arm/pose_test.cpp)
+add_dependencies(pose_test ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pose_test ${catkin_LIBRARIES} )
 
 if(CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)

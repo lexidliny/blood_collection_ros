@@ -37,6 +37,9 @@
 #include <kortex_driver/SendWrenchCommand.h>
 #include <kortex_driver/BaseCyclic_Feedback.h>
 
+#include "hand_mediapipe/FingerTipPose.h"
+#include "hand_mediapipe/LandmarkPoint.h"
+
 #include <iostream>
 #include <stdio.h>
 #include <wchar.h>
@@ -257,12 +260,12 @@ bool go_up(ros::NodeHandle n, const std::string &robot_name)
   service_execute_action.request.input.handle.identifier = 1004;
   service_execute_action.request.input.name = "pose4";
   
-  my_constrained_pose.target_pose.x = 0.38;
-  my_constrained_pose.target_pose.y = -0.048;
-  my_constrained_pose.target_pose.z = 0.612;
-  my_constrained_pose.target_pose.theta_x = 0.;
-  my_constrained_pose.target_pose.theta_y = 180.;
-  my_constrained_pose.target_pose.theta_z = 0.;
+  my_constrained_pose.target_pose.x = 0.378;
+  my_constrained_pose.target_pose.y = 0.005;
+  my_constrained_pose.target_pose.z = 0.501;
+  my_constrained_pose.target_pose.theta_x = 180.;
+  my_constrained_pose.target_pose.theta_y = 0.;
+  my_constrained_pose.target_pose.theta_z = 90.;
 
   sleep(1);
   service_execute_action.request.input.oneof_action_parameters.reach_pose.clear();
@@ -280,7 +283,7 @@ bool go_up(ros::NodeHandle n, const std::string &robot_name)
   }
 
   std::cout<<"success"<<std::endl;
-  wait_for_action_end_or_abort();
+//   wait_for_action_end_or_abort();
 
 
   
@@ -292,7 +295,7 @@ bool go_up(ros::NodeHandle n, const std::string &robot_name)
 }
 
 /* Used by ‘main’ to communicate with ‘parse_opt’. */
-bool go_forehead_up(ros::NodeHandle n, const std::string &robot_name)
+bool go_fingertip_up(ros::NodeHandle n, const std::string &robot_name)
 {
 
   kortex_driver::ConstrainedPose my_constrained_pose;
@@ -306,8 +309,8 @@ bool go_forehead_up(ros::NodeHandle n, const std::string &robot_name)
   // std::cout<<"after 2.5 second"<<std::endl;
   sleep(1);
   std::cout<<"after 1 second"<<std::endl;
-  ros::ServiceClient getWearingPose = n.serviceClient<forehead_detect::GetForeheadPose>("/" + robot_name + "/get_forehead_pose_server");
-  forehead_detect::GetForeheadPose get;
+  ros::ServiceClient getWearingPose = n.serviceClient<hand_mediapipe::FingerTipPose>("/" + robot_name +"/fingertip_pose_server");
+  hand_mediapipe::FingerTipPose get;
    std::cout<<"after 1 second"<<std::endl;
   if (getWearingPose.call(get))
   {
@@ -316,16 +319,94 @@ bool go_forehead_up(ros::NodeHandle n, const std::string &robot_name)
     service_execute_action.request.input.handle.identifier = 1005;
     service_execute_action.request.input.name = "pose5";
     
-    tf::Quaternion q( get.response.ForeheadPose.orientation.x, get.response.ForeheadPose.orientation.y,
-                      get.response.ForeheadPose.orientation.z,get.response.ForeheadPose.orientation.w);
+    tf::Quaternion q( get.response.pose.orientation.x, get.response.pose.orientation.y,
+                      get.response.pose.orientation.z,get.response.pose.orientation.w);
     double roll, pitch, yaw;//x y z
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
     roll = roll / M_PI * 180;
     pitch = pitch / M_PI * 180;
     yaw = yaw / M_PI * 180;
-    my_constrained_pose.target_pose.x = get.response.ForeheadPose.position.x;
-    my_constrained_pose.target_pose.y = get.response.ForeheadPose.position.y;
-    my_constrained_pose.target_pose.z = get.response.ForeheadPose.position.z ;
+    my_constrained_pose.target_pose.x = get.response.pose.position.x;
+    my_constrained_pose.target_pose.y = get.response.pose.position.y;
+    my_constrained_pose.target_pose.z = get.response.pose.position.z ;
+    my_constrained_pose.target_pose.theta_x = roll;
+    my_constrained_pose.target_pose.theta_y = pitch;
+    my_constrained_pose.target_pose.theta_z = yaw;
+
+    std::cout<<"wearing pose的位置坐标：x="<<my_constrained_pose.target_pose.x<<",y="<<my_constrained_pose.target_pose.y
+            <<",z="<<my_constrained_pose.target_pose.z<<std::endl;
+        std::cout<<"wearing pose的rotation：theta_x="<<my_constrained_pose.target_pose.theta_x <<",theta_y="<<my_constrained_pose.target_pose.theta_y<<
+    ",theta_z="<<my_constrained_pose.target_pose.theta_z<<std::endl;
+  }
+  else
+  {
+    ROS_ERROR("Failed to call get_wearing_pose service");
+    return false;
+  }
+
+  // my_constrained_pose.target_pose.x = 0;
+  // my_constrained_pose.target_pose.y = 0.;
+  // my_constrained_pose.target_pose.z = 0.1;
+  // my_constrained_pose.target_pose.theta_x = 0;
+  // my_constrained_pose.target_pose.theta_y = 0;
+  // my_constrained_pose.target_pose.theta_z = 0;
+
+
+  sleep(1);
+  service_execute_action.request.input.oneof_action_parameters.reach_pose.clear();
+  service_execute_action.request.input.oneof_action_parameters.reach_pose.push_back(my_constrained_pose);
+  last_action_notification_event = 0;
+  if (service_client_execute_action.call(service_execute_action))
+  {
+    ROS_INFO("Pose 2 was sent to the robot.");
+  }
+  else
+  {
+    std::string error_string = "Failed to call ExecuteAction on pose 2";
+    ROS_ERROR("%s", error_string.c_str());
+    return false;
+  }
+  std::cout<<"success"<<std::endl;
+
+  // Waiting for the pose 1 to end
+ return wait_for_action_end_or_abort();
+
+}
+
+bool go_palm_up(ros::NodeHandle n, const std::string &robot_name)
+{
+
+  kortex_driver::ConstrainedPose my_constrained_pose;
+  kortex_driver::CartesianSpeed my_cartesian_speed;
+  my_cartesian_speed.translation = 0.18f;
+  my_cartesian_speed.orientation = 40.0f;
+  my_constrained_pose.constraint.oneof_type.speed.push_back(my_cartesian_speed);
+
+  ros::ServiceClient service_client_execute_action = n.serviceClient<kortex_driver::ExecuteAction>("/" + robot_name + "/base/execute_action");
+  kortex_driver::ExecuteAction service_execute_action;
+  // std::cout<<"after 2.5 second"<<std::endl;
+  sleep(1);
+  std::cout<<"after 1 second"<<std::endl;
+  ros::ServiceClient getWearingPose = n.serviceClient<hand_mediapipe::FingerTipPose>("/" + robot_name +"/palm_pose_server");
+  hand_mediapipe::FingerTipPose get;
+   std::cout<<"after 1 second"<<std::endl;
+  if (getWearingPose.call(get))
+  {
+    ROS_INFO("get the wearing pose");
+    //  Change the pose and give it a new identifier
+    service_execute_action.request.input.handle.identifier = 1005;
+    service_execute_action.request.input.name = "pose5";
+    
+    tf::Quaternion q( get.response.pose.orientation.x, get.response.pose.orientation.y,
+                      get.response.pose.orientation.z,get.response.pose.orientation.w);
+    double roll, pitch, yaw;//x y z
+    tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    roll = roll / M_PI * 180;
+    pitch = pitch / M_PI * 180;
+    yaw = yaw / M_PI * 180;
+    my_constrained_pose.target_pose.x = get.response.pose.position.x;
+    my_constrained_pose.target_pose.y = get.response.pose.position.y;
+    my_constrained_pose.target_pose.z = get.response.pose.position.z ;
     my_constrained_pose.target_pose.theta_x = roll;
     my_constrained_pose.target_pose.theta_y = pitch;
     my_constrained_pose.target_pose.theta_z = yaw;
@@ -521,10 +602,10 @@ int main(int argc, char **argv)
   // success &= set_cartesian_reference_tool_frame(n, robot_name);
   // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // sleep(1);
-  success &= go_forehead_up(n, robot_name);
+  success &= go_palm_up(n, robot_name);
   sleep(8);
   // success &= give_force(n, robot_name);
-   success &= go_up(n, robot_name);
+//    success &= go_up(n, robot_name);
 
   // success &= example_cartesian_action(n, robot_name);
   // success &= all_notifs_succeeded;

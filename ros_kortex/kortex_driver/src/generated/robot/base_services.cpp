@@ -2711,14 +2711,34 @@ bool BaseRobotServices::SendWrenchCommand(kortex_driver::SendWrenchCommand::Requ
 {
 	
 	Kinova::Api::Base::WrenchCommand input;
+	
 	ToProtoData(req.input, &input);
 	kortex_driver::KortexError result_error;
 	
 	try
 	{
+		if(input.wrench().force_z() == 9.0)
+		{
+			
 			m_base->SendWrenchCommand(input, m_current_device_id, m_api_options);
-			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+			std::cout << "2 s" << std::endl;
 			m_base->Stop();
+		}else if(input.wrench().force_z() == 5.0)
+		{
+			m_base->SendWrenchCommand(input, m_current_device_id, m_api_options);
+			std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+			std::cout << "4 s" << std::endl;
+			m_base->Stop();
+		}
+
+		else{
+			std::cout << input.wrench().force_z() << std::endl;
+				m_base->SendWrenchCommand(input, m_current_device_id, m_api_options);
+			std::this_thread::sleep_for(std::chrono::milliseconds(9000));
+			std::cout << "9 s" << std::endl;
+			m_base->Stop();
+		}
 	}
 
 	catch (Kinova::Api::KDetailedException& ex)

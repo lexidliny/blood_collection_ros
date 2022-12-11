@@ -74,6 +74,8 @@ kortex_driver::CartesianWaypoint FillCartesianWaypoint(float new_x, float new_y,
   cartesianWaypoint.pose.theta_z = new_theta_z;
   cartesianWaypoint.reference_frame = kortex_driver::CartesianReferenceFrame::CARTESIAN_REFERENCE_FRAME_BASE;
   cartesianWaypoint.blending_radius = blending_radius;
+  cartesianWaypoint.maximum_angular_velocity = 70.;
+
 
   return cartesianWaypoint;
 }
@@ -168,13 +170,13 @@ bool example_cartesian_waypoint_action(ros::NodeHandle n, const std::string &rob
   }
   else
   {
-    goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.0,   0.5,  angles::from_degrees(90), 0, angles::from_degrees(90), 0));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.0,   0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.61, 0.22,  0.4,  angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.63, -0.22, 0.45, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
-    goal.trajectory.push_back(FillCartesianWaypoint(0.65, 0.05,  0.45, angles::from_degrees(90), 0, angles::from_degrees(90), 0));
+    goal.trajectory.push_back(FillCartesianWaypoint(0.450,  0.018,   0.380,  angles::from_degrees(180.), 0, angles::from_degrees(90.), 0));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.0,   0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.61, 0.22,  0.4,  angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.63, -0.22, 0.45, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.65, 0.05,  0.45, angles::from_degrees(90), 0, angles::from_degrees(90), 0));
   }
 
   ac.sendGoal(goal);
@@ -195,6 +197,71 @@ bool example_cartesian_waypoint_action(ros::NodeHandle n, const std::string &rob
   //exit
   return completed;
 }
+
+bool example_cartesian_waypoint_action2(ros::NodeHandle n, const std::string &robot_name)
+{
+  ros::ServiceClient service_client_get_config = n.serviceClient<kortex_driver::GetProductConfiguration>("/" + robot_name + "/base/get_product_configuration");
+  kortex_driver::GetProductConfiguration service_get_config;
+  
+  actionlib::SimpleActionClient<kortex_driver::FollowCartesianTrajectoryAction> ac(robot_name + "/cartesian_trajectory_controller/follow_cartesian_trajectory", true);
+  ros::Duration server_timeout(5, 0);
+
+  ROS_INFO("Waiting for the server.");
+  
+  // wait for the action server to start
+  ac.waitForServer();
+
+  ROS_INFO("Server responded.");
+
+  kortex_driver::FollowCartesianTrajectoryGoal goal;
+
+  goal.use_optimal_blending = false;
+
+  if (!service_client_get_config.call(service_get_config))
+  {
+    std::string error_string = "Failed to call GetProductConfiguration";
+    ROS_ERROR("%s", error_string.c_str());
+    return false;
+  }
+
+  auto product_config = service_get_config.response.output;
+
+  if(product_config.model == kortex_driver::ModelId::MODEL_ID_L31) //If the robot is a GEN3-LITE use this trajectory.
+  {
+    goal.trajectory.push_back(FillCartesianWaypoint(0.439,  0.194,  0.448, angles::from_degrees(90.6), angles::from_degrees(-1.0), angles::from_degrees(150), 0));
+    goal.trajectory.push_back(FillCartesianWaypoint(0.200,  0.150,  0.400, angles::from_degrees(90.6), angles::from_degrees(-1.0), angles::from_degrees(150), 0));
+    goal.trajectory.push_back(FillCartesianWaypoint(0.350,  0.050,  0.300, angles::from_degrees(90.6), angles::from_degrees(-1.0), angles::from_degrees(150), 0));
+  }
+  else
+  {
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.450,  0.018,   0.380,  angles::from_degrees(180.), 0, angles::from_degrees(90.), 0));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.0,   0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.61, 0.22,  0.4,  angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.7,  0.48,  0.33, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    // goal.trajectory.push_back(FillCartesianWaypoint(0.63, -0.22, 0.45, angles::from_degrees(90), 0, angles::from_degrees(90), 0.1));
+    goal.trajectory.push_back(FillCartesianWaypoint(0.450,  0.018,   0.380,  angles::from_degrees(180.), 0, angles::from_degrees(0.), 0));
+  }
+  
+  ac.sendGoal(goal);
+
+  //wait for the action to return
+  bool completed = ac.waitForResult(ros::Duration(50.0));
+
+  if (completed)
+  {
+    actionlib::SimpleClientGoalState state = ac.getState();
+    ROS_INFO("Action finished: %s",state.toString().c_str());
+  }
+  else
+  {
+    ROS_ERROR("Action did not finish before the time out.");
+  }
+
+  //exit
+  return completed;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -265,17 +332,19 @@ int main(int argc, char **argv)
 
   //*******************************************************************************
   // Move the robot to the Home position with an Action
-  success &= example_home_the_robot(n, robot_name);
+  // success &= example_home_the_robot(n, robot_name);
   //*******************************************************************************
 
   //*******************************************************************************
   // Move the robot using Cartesian waypoint with the action server.
   success &= example_cartesian_waypoint_action(n, robot_name);
+  success &= example_cartesian_waypoint_action2(n, robot_name);
+  
   //*******************************************************************************
 
   //*******************************************************************************
   // Move the robot to the Home position one last time.
-  success &= example_home_the_robot(n, robot_name);
+  // success &= example_home_the_robot(n, robot_name);
   //*******************************************************************************
 
   // Report success for testing purposes
